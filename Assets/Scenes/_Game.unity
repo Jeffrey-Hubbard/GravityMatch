@@ -147,9 +147,24 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 73ba3145352900a4d9547e22d31b05ef, type: 3}
   - {fileID: 21300000, guid: a03661b8afb60da4882b0ac17a6dab5b, type: 3}
   - {fileID: 21300000, guid: ec7f980213007d54eb21c149187b8f7a, type: 3}
-  tile: {fileID: 1000010131827792, guid: d865865fefcc4b44ca7242ca3bb6d141, type: 2}
-  xSize: 9
-  ySize: 9
+  tile: {fileID: 114238203400684026, guid: d865865fefcc4b44ca7242ca3bb6d141, type: 2}
+  MatchColor:
+  - blue
+  - green
+  - black
+  - orange
+  - brown
+  - grey
+  - none
+  - random
+  ShipType:
+  - fighter
+  - bomber
+  - transport
+  - meteor
+  - bonus
+  - none
+  - random
 --- !u!4 &81907681
 Transform:
   m_ObjectHideFlags: 0
