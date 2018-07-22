@@ -13,8 +13,12 @@ public class BoardManager : MonoBehaviour
     public static int ySize = 9;
 
     public Tile[,] tiles;
+    public Tile[,] tempTiles;
+    public int howManyMatches;
 
-    public bool IsMoving { get; set; }
+    List<Tile> matchedTiles = new List<Tile>();
+
+    public bool IsMoving = false;
 
     public List<string> MatchColor = new List<string> { "blue", "green", "black", "orange", "brown", "grey"};
     public List<string> ShipType = new List<string> { "fighter", "bomber", "transport", "asteroid", "bonus"};
@@ -27,6 +31,22 @@ public class BoardManager : MonoBehaviour
         Vector2 offset = tile.GetComponent<BoxCollider2D>().size;
 
         MakeBoard(offset.x, offset.y);
+    }
+
+    private void Update()
+    {
+        for (int x = 0; x < xSize; x++)
+        {
+            for (int y = 0; y < ySize; y++)
+            {
+                Tile eachTile = tiles[x, y];
+                if (eachTile != null)
+                {
+                    eachTile.x = x;
+                    eachTile.y = y;
+                }
+            }
+        }
     }
 
     private void MakeBoard(float xOffset, float yOffset)
@@ -44,7 +64,8 @@ public class BoardManager : MonoBehaviour
             for (int y = 0; y < ySize; y++)
             {
                 Tile newTile = Instantiate(tile, new Vector3(originX + (xOffset * x), originY + (yOffset * y), 0), tile.transform.rotation);
-                newTile.name = " Tile at " + x + " " + y;
+                newTile.x = x;
+                newTile.y = y;
 
                 tiles[x, y] = newTile;
                 newTile.transform.parent = transform;
@@ -57,10 +78,9 @@ public class BoardManager : MonoBehaviour
                 possibleColors.Remove(previousLeftList[y]);
                 possibleColors.Remove(previousBelow);
 
-                //Sprite newSprite = possibleSymbols[Random.Range(0, possibleSymbols.Count)];
                 string newColor = possibleColors[UnityEngine.Random.Range(0, possibleColors.Count)];
                 Debug.Log("Setting sprite at " + x + ", " + y + " to " + newColor);
-                newTile.Initialize(matchColor : newColor);
+                newTile.Initialize(assignedColor : newColor);
 
 
                 previousLeftList[y] = newColor;
@@ -69,21 +89,43 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    private void ClearMatches()
+
+    public void ClearMatches()
     {
         bool FoundAnyMatches = false;
         boardManager.IsMoving = true;
-        Tile[,] tempTiles = tiles;
-        Tile[,] matchedTiles = new Tile[xSize, ySize];
+        tempTiles = tiles;
+        matchedTiles = new List<Tile>();
 
         //begin a loop through the tempTiles
         foreach (Tile tile in tempTiles)
         {
-            int howManyMatches = 0;
-            // is tile a valid matched tile? (reuse code from movement check)
-                
-            // if yes, then set FoundAnyMatches to true, then
-            // mark all matched tiles in matchedTiles and remove from temptiles
+            howManyMatches = 0;
+            if (tile != null)
+            {
+                // is tile a valid matched tile? (reuse code from movement check)
+                if (ConfirmMatch(tile))
+                {
+                    // if yes, then set FoundAnyMatches to true, then
+                    // mark all matched tiles in matchedTiles and remove from temptiles
+                    FoundAnyMatches = true;
+                    DestroyTileAndMatches(tile);
+                    if (howManyMatches == 3)
+                    {
+                        // create minor bonus at tile location, d
+                    }
+                    else if (howManyMatches > 3)
+                    {
+                        //create major bonus at tile location, remove from matched and destroy
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+
+
 
             // based on value of howManyMatches either replace tile with a bonus tile at tile location...
 
@@ -93,10 +135,67 @@ public class BoardManager : MonoBehaviour
 
         // If the program FoundAnyMatches then
         // Call function to fill in empty spaces
-
+        tiles = tempTiles;
+        if (FoundAnyMatches == true)
+        {
+            ClearMatches();
+        } else
+        {
+            IsMoving = false;
+        }
         //else return control to player
-        
 
+        
     }
+
+    private void DestroyTileAndMatches(Tile tile)
+    {
+        matchedTiles.Add(tile);
+        tempTiles[tile.x, tile.y] = null;
+        howManyMatches += 1;
+        List<Tile> nextMatches = new List<Tile>();
+        nextMatches = tile.GetTempAdjacentMatches();
+        foreach (Tile newTile in nextMatches)
+        {
+            if (newTile != null)
+            {
+                DestroyTileAndMatches(newTile);
+            }
+            
+        }
+        foreach (Tile destroyThisTile in matchedTiles)
+        {
+            Debug.Log("Attempting to destroy the tile " + destroyThisTile.name + " at " + destroyThisTile.x + ", " + destroyThisTile.y);
+            Destroy(destroyThisTile);
+        }
+    }
+
+    public bool IsValidMove(Tile tile1, Tile tile2)
+    {
+
+        return true;
+    }
+
+    public bool ConfirmMatch(Tile tile)
+    {
+        List<Tile> possibleMatchList = tile.GetExtendedMatches();
+        bool confirmedMatch = false;
+        for (int a = 0; a < possibleMatchList.Count; a++)
+        {
+            for (int b = 0; b < possibleMatchList.Count; b++)
+            {
+                if (a != b)
+                {
+                    if ((possibleMatchList[a].x == possibleMatchList[b].x && Math.Abs(possibleMatchList[a].y - possibleMatchList[b].y) <= 2) ||
+                        (possibleMatchList[a].y == possibleMatchList[b].y && Math.Abs(possibleMatchList[a].x - possibleMatchList[b].x) <= 2))
+                    {
+                        confirmedMatch = true;
+                    }
+                }
+            }
+        }
+        return confirmedMatch;
+    }
+
 }
 

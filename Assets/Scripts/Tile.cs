@@ -9,6 +9,9 @@ public class Tile : MonoBehaviour {
     private SpriteRenderer render;
     private bool isSelected = false;
 
+    public int x, y;
+    public static float speed = 7.0f;
+
     private Vector2[] adjacentCells = new Vector2[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
     //public enum MatchColor { blue, green, black, orange, brown, grey, none, random}
@@ -48,8 +51,9 @@ public class Tile : MonoBehaviour {
 
     }
 
-    public void Initialize( string matchColor )
+    public void Initialize( string assignedColor )
     {
+        matchColor = assignedColor;
         if (matchColor == "random")
         {
             matchColor = GetRandomMatchColor();
@@ -73,35 +77,28 @@ public class Tile : MonoBehaviour {
 
 
         string spriteName = shipType + "_" + matchColor;
+        this.name = spriteName;
         render.sprite = Resources.Load<Sprite>(spriteName);
         transform.Rotate(0.0f, 0.0f, UnityEngine.Random.Range(0, 3) * 90);
     }
-
-    //public void Initialize(string matchColor = "random", string shipType = "random")
-    //{
-    //    if (shipType == "random")
-    //    {
-    //        shipType = GetRandomShipType();
-    //    }
-    //    if (matchColor == "random")
-    //    {
-    //        matchColor = GetRandomMatchColor();
-    //    }
-
-
-    //    string spriteName = shipType + "_" + matchColor;
-    //    render.sprite = Resources.Load<Sprite>(spriteName);
-    //}
 
     void Awake ()
     {
         render = GetComponent<SpriteRenderer>();
 	}
 
+    private void Update()
+    {
+        if ((transform.position.x != x || transform.position.y != y))
+        {
+            transform.position = Vector3.MoveTowards(transform.position, new Vector3(x, y, 0), speed * Time.deltaTime);
+        }
+    }
+
     private void Select()
     {
         isSelected = true;
-        gameObject.transform.GetChild(0).GetComponent<Renderer>().enabled = true;
+        this.gameObject.transform.GetChild(0).GetComponent<Renderer>().enabled = true;
         previousTile = gameObject.GetComponent<Tile>();
         // Play a sound?
     }
@@ -115,22 +112,28 @@ public class Tile : MonoBehaviour {
 
     public void OnMouseDown()
     {
+        BoardManager.boardManager.IsMoving = false;
         if (render.sprite == null || BoardManager.boardManager.IsMoving) { return; }
-
         if (isSelected)
         {
+            Debug.Log("calling deselect");
             Deselect();
         } else
         {
             if (previousTile == null)
             {
+                Debug.Log("calling select");
                 Select();
             } else
             {
-                if (GetAllAdjacentTiles().Contains(previousTile.gameObject))
+                if (GetAllAdjacentTiles().Contains(previousTile))
                 {
-                    SwapTiles(previousTile.render);
+                    Debug.Log("touched tile is adjacent, moving tiles");
+                    BoardManager.boardManager.IsMoving = true;
+                    SwapTiles(previousTile, this);
+                    Debug.Log("Ran swap tiles");
                     previousTile.Deselect();
+                    //BoardManager.boardManager.IsMoving = false;
                 } else
                 {
                     previousTile.GetComponent<Tile>().Deselect();
@@ -141,33 +144,167 @@ public class Tile : MonoBehaviour {
         }
     }
 
-    public void SwapTiles (SpriteRenderer renderer)
+    public void SwapTiles (Tile previousTile, Tile touchedTile)
     {
-        if (render.sprite == renderer.sprite) { return;  }
-
-        Sprite tempSprite = renderer.sprite;
-        renderer.sprite = render.sprite;
-        render.sprite = tempSprite;
-    }
-
-    private GameObject GetAdjacent(Vector2 castDirection)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, castDirection);
-        if (hit.collider != null)
+        Debug.Log("Made it into swap tiles");
+        if (previousTile.matchColor == this.matchColor) { return; }
+        bool validMatch = BoardManager.boardManager.IsValidMove(previousTile, touchedTile);
+        if (validMatch)
         {
-            return hit.collider.gameObject;
-        }
-        return null;
+            
+            int previousX = previousTile.x;
+            int previousY = previousTile.y;
+            BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
+            BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
+            
+            //previousTile.x = this.x;
+            //previousTile.y = this.y;
+            //this.x = previousX;
+            //this.y = previousY;
+            //BoardManager.boardManager.ClearMatches();
     }
+}
 
-    private List<GameObject> GetAllAdjacentTiles()
+    private List<Tile> GetAllAdjacentTiles()
     {
-        List<GameObject> adjacentTiles = new List<GameObject>();
-        for (int i = 0; i < adjacentCells.Length; i++)
+        List<Tile> adjacentTiles = new List<Tile>();
+
+        for (int ix = -1; ix <= 1; ix++)
         {
-            adjacentTiles.Add(GetAdjacent(adjacentCells[i]));
+            for (int iy = -1; iy <= 1; iy++)
+            {
+                if (x + ix >= 0 && x + ix < BoardManager.xSize && y + iy >= 0 && y + iy < BoardManager.ySize)
+                {
+                    if ((ix == 0 || iy == 0) && !(ix == 0 && iy == 0))
+                    {
+                        Tile provisionalTile = BoardManager.boardManager.tiles[x + ix, y + iy];
+                        if (provisionalTile != null)
+                        {
+                            adjacentTiles.Add(provisionalTile);
+                        }
+                    }
+                }
+            }
         }
         return adjacentTiles;
+    }
+
+    private List<Tile> GetAllTempAdjacentTiles()
+    {
+        List<Tile> adjacentTiles = new List<Tile>();
+
+        for (int ix = -1; ix <= 1; ix++)
+        {
+            for (int iy = -1; iy <= 1; iy++)
+            {
+                if (x + ix >= 0 && x + ix < BoardManager.xSize && y + iy >= 0 && y + iy < BoardManager.ySize)
+                {
+                    if ((ix == 0 || iy == 0) && !(ix == 0 && iy == 0))
+                    {
+                        Tile provisionalTile = BoardManager.boardManager.tempTiles[x + ix, y + iy];
+                        if (provisionalTile != null)
+                        {
+                            adjacentTiles.Add(provisionalTile);
+                        }
+                    }
+                }
+            }
+        }
+        return adjacentTiles;
+    }
+
+    private List<Tile> GetAllExtendedTiles()
+    {
+        List<Tile> adjacentTiles = new List<Tile>();
+
+        for (int ix = -2; ix <= 2; ix++)
+        {
+            for (int iy = -2; iy <= 2; iy++)
+            {
+                if (x + ix >= 0 && x + ix < BoardManager.xSize && y + iy >= 0 && y + iy < BoardManager.ySize)
+                {
+                    if ((ix == 0 || iy == 0) && !(ix == 0 && iy == 0))
+                    {
+                        Tile provisionalTile = BoardManager.boardManager.tiles[x + ix, y + iy];
+                        if (provisionalTile != null)
+                        {
+                            adjacentTiles.Add(provisionalTile);
+                        }
+                        
+                    }
+                }
+            }
+        }
+        return adjacentTiles;
+    }
+
+    public bool ConfirmMatch( int xPos, int yPos )
+    {
+        List<Tile> possibleMatchList = previousTile.GetExtendedMatches();
+        bool confirmedMatch = false;
+        for (int a = 0; a < possibleMatchList.Count; a++)
+        {
+            for (int b = 0; b < possibleMatchList.Count; b++)
+            {
+                if (a != b)
+                {
+                    if ((possibleMatchList[a].x == possibleMatchList[b].x && Math.Abs(possibleMatchList[a].y - possibleMatchList[b].y) <= 2) ||
+                        (possibleMatchList[a].y == possibleMatchList[b].y && Math.Abs(possibleMatchList[a].x - possibleMatchList[b].x) <= 2))
+                    {
+                        confirmedMatch = true;
+                    }
+                }
+            }
+        }
+        return confirmedMatch;
+    }
+
+    public List<Tile> GetAdjacentMatches()
+    {
+        List<Tile> adjacentTiles = GetAllAdjacentTiles();
+        List<Tile> adjacentMatches = new List<Tile>();
+        foreach (Tile tile in adjacentTiles)
+        {
+            if ((tile != this) && (tile.matchColor == this.matchColor))
+            {
+                adjacentMatches.Add(tile);
+            }
+        }
+        return adjacentMatches;
+    }
+
+    public List<Tile> GetTempAdjacentMatches()
+    {
+        List<Tile> adjacentTiles = GetAllTempAdjacentTiles();
+        List<Tile> adjacentMatches = new List<Tile>();
+        foreach (Tile tile in adjacentTiles)
+        {
+            if ((tile != this) && (tile.matchColor == this.matchColor))
+            {
+                adjacentMatches.Add(tile);
+            }
+        }
+        return adjacentMatches;
+    }
+
+    public List<Tile> GetExtendedMatches()
+    {
+        List<Tile> adjacentTiles = GetAllExtendedTiles();
+        List<Tile> adjacentMatches = new List<Tile>();
+        foreach (Tile tile in adjacentTiles)
+        {
+            if (tile.matchColor == this.matchColor)
+            {
+                adjacentMatches.Add(tile);
+            }
+        }
+        return adjacentMatches;
+    }
+
+    public List<Tile> GetMatches(List<Tile> tileList)
+    {
+        List<Tile> returnMatches = new List<Tile>(); ;
+        return returnMatches;
     }
 
     private string GetRandomShipType()
