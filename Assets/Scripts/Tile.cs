@@ -8,14 +8,10 @@ public class Tile : MonoBehaviour {
 
     private SpriteRenderer render;
     private bool isSelected = false;
+    public float TileMovementTime = 0.2f;
 
     public int x, y;
     public static float speed = 7.0f;
-
-    private Vector2[] adjacentCells = new Vector2[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-
-    //public enum MatchColor { blue, green, black, orange, brown, grey, none, random}
-    //public enum ShipType { fighter, bomber, transport, meteor, bonus, none, random}
 
     public List<string> MatchColors = new List<string> { "blue", "green", "black", "orange", "brown", "grey" };
     public List<string> ShipTypes = new List<string> { "fighter", "bomber", "transport", "asteroid" };
@@ -156,14 +152,42 @@ public class Tile : MonoBehaviour {
             int previousY = previousTile.y;
             BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
             BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
+
+            // give the tiles time to move
+            Debug.Log("start coroutine");
+            StartCoroutine(TileMovementDelay(previousTile, touchedTile));
+            Debug.Log("end coroutine");
+            // are there any matches?
+            // if yes, run ClearMatches
+
+            // if no, undo the tile movement (illegal move)
             
-            //previousTile.x = this.x;
-            //previousTile.y = this.y;
-            //this.x = previousX;
-            //this.y = previousY;
-            //BoardManager.boardManager.ClearMatches();
+
+
+        }
+
+        
     }
-}
+
+    private IEnumerator TileMovementDelay (Tile previousTile, Tile touchedTile)
+    {
+        yield return new WaitForSeconds(TileMovementTime);
+        bool previousMatch = previousTile.ConfirmMatch(previousTile.x, previousTile.y);
+        bool touchedMatch = touchedTile.ConfirmMatch(touchedTile.x, touchedTile.y);
+        if (previousMatch || touchedMatch)
+        {
+            // match! Clear matches!
+            Debug.Log("valid match");
+        } else
+        {
+            int previousX = previousTile.x;
+            int previousY = previousTile.y;
+            BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
+            BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
+        }
+        
+
+    }
 
     private List<Tile> GetAllAdjacentTiles()
     {
@@ -240,7 +264,7 @@ public class Tile : MonoBehaviour {
 
     public bool ConfirmMatch( int xPos, int yPos )
     {
-        List<Tile> possibleMatchList = previousTile.GetExtendedMatches();
+        List<Tile> possibleMatchList = this.GetExtendedMatches();
         bool confirmedMatch = false;
         for (int a = 0; a < possibleMatchList.Count; a++)
         {

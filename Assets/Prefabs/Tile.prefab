@@ -108,6 +108,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11204b210d2100943b9ac8d01c138a3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  TileMovementTime: 0.2
   x: 0
   y: 0
   MatchColors:
