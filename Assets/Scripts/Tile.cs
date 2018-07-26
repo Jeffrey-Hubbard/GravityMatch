@@ -11,7 +11,7 @@ public class Tile : MonoBehaviour {
     public float TileMovementTime = 0.2f;
 
     public int x, y;
-    public static float speed = 7.0f;
+    public static float speed = 9.0f;
 
     public List<string> MatchColors = new List<string> { "blue", "green", "black", "orange", "brown", "grey" };
     public List<string> ShipTypes = new List<string> { "fighter", "bomber", "transport", "asteroid" };
@@ -108,7 +108,7 @@ public class Tile : MonoBehaviour {
 
     public void OnMouseDown()
     {
-        BoardManager.boardManager.IsMoving = false;
+        //BoardManager.boardManager.IsMoving = false;
         if (render.sprite == null || BoardManager.boardManager.IsMoving) { return; }
         if (isSelected)
         {
@@ -143,29 +143,17 @@ public class Tile : MonoBehaviour {
     public void SwapTiles (Tile previousTile, Tile touchedTile)
     {
         Debug.Log("Made it into swap tiles");
-        if (previousTile.matchColor == this.matchColor) { return; }
-        bool validMatch = BoardManager.boardManager.IsValidMove(previousTile, touchedTile);
-        if (validMatch)
-        {
+
             
-            int previousX = previousTile.x;
-            int previousY = previousTile.y;
-            BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
-            BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
+        int previousX = previousTile.x;
+        int previousY = previousTile.y;
+        BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
+        BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
 
-            // give the tiles time to move
-            Debug.Log("start coroutine");
-            StartCoroutine(TileMovementDelay(previousTile, touchedTile));
-            Debug.Log("end coroutine");
-            // are there any matches?
-            // if yes, run ClearMatches
-
-            // if no, undo the tile movement (illegal move)
-            
-
-
-        }
-
+        // give the tiles time to move
+        Debug.Log("start coroutine");
+        StartCoroutine(TileMovementDelay(previousTile, touchedTile));
+        Debug.Log("end coroutine");
         
     }
 
@@ -178,6 +166,7 @@ public class Tile : MonoBehaviour {
         {
             // match! Clear matches!
             Debug.Log("valid match");
+            BoardManager.boardManager.ClearMatches();
         } else
         {
             int previousX = previousTile.x;
@@ -185,8 +174,8 @@ public class Tile : MonoBehaviour {
             BoardManager.boardManager.tiles[touchedTile.x, touchedTile.y] = previousTile;
             BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
         }
-        
-
+        yield return new WaitForSeconds(0.5f);
+        BoardManager.boardManager.IsMoving = false;
     }
 
     private List<Tile> GetAllAdjacentTiles()

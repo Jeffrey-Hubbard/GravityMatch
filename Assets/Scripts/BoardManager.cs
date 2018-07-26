@@ -12,11 +12,10 @@ public class BoardManager : MonoBehaviour
     public static int xSize = 9;
     public static int ySize = 9;
 
+
     public Tile[,] tiles;
     public Tile[,] tempTiles;
     public int howManyMatches;
-
-    List<Tile> matchedTiles = new List<Tile>();
 
     public bool IsMoving = false;
 
@@ -39,9 +38,9 @@ public class BoardManager : MonoBehaviour
         {
             for (int y = 0; y < ySize; y++)
             {
-                Tile eachTile = tiles[x, y];
-                if (eachTile != null)
+                if (tiles[x,y] != null)
                 {
+                    Tile eachTile = tiles[x, y];
                     eachTile.x = x;
                     eachTile.y = y;
                 }
@@ -89,92 +88,196 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    private Tile[,] CopyBoard(Tile[,] tiles)
+    {
+        Tile[,] copyTiles = new Tile[xSize,ySize];
+        for (int x = 0; x < xSize; x++)
+        {
+            for (int y = 0; y < ySize; y++)
+            {
+                copyTiles[x, y] = tiles[x, y];
+            }
+        }
+
+        return copyTiles;
+    }
+
 
     public void ClearMatches()
     {
         bool FoundAnyMatches = false;
         boardManager.IsMoving = true;
-        tempTiles = tiles;
-        matchedTiles = new List<Tile>();
+        tempTiles = CopyBoard(tiles);
+        List<Tile> matchedTiles = new List<Tile>();
 
         //begin a loop through the tempTiles
-        foreach (Tile tile in tempTiles)
+        for (int x = 0; x < xSize; x++)
         {
-            howManyMatches = 0;
-            if (tile != null)
+            for (int y = 0; y < ySize; y++)
             {
-                // is tile a valid matched tile? (reuse code from movement check)
-                if (ConfirmMatch(tile))
+                
+                tile = tempTiles[x, y];
+                if ( tile != null)
                 {
-                    // if yes, then set FoundAnyMatches to true, then
-                    // mark all matched tiles in matchedTiles and remove from temptiles
-                    FoundAnyMatches = true;
-                    DestroyTileAndMatches(tile);
-                    if (howManyMatches == 3)
+                    // is tile a valid matched tile? (reuse code from movement check)
+                    if (ConfirmMatch(tile))
                     {
-                        // create minor bonus at tile location, d
-                    }
-                    else if (howManyMatches > 3)
-                    {
-                        //create major bonus at tile location, remove from matched and destroy
-                    }
-                    else
-                    {
+                        matchedTiles.Add(tile);
+                        // if yes, then set FoundAnyMatches to true, then
+                        // mark all matched tiles in matchedTiles and remove from temptiles
+                        FoundAnyMatches = true;
+                        Debug.Log("Tile at " + tile.x + ", " + tile.y + " Is a match!");
+                        Debug.Log("matched " + howManyMatches + " tiles");
+                        //Debug.Log("matchedTiles contains " + matchedTiles.Count + " Tiles");
+                        //if (howManyMatches == 3)
+                        //{
+                        //    // create minor bonus at tile location, d
+                        //}
+                        //else if (howManyMatches > 3)
+                        //{
+                        //    //create major bonus at tile location, remove from matched and destroy
+                        //}
+                        //else
+                        //{
 
+                        //}
+                        
+
+                        //foreach (Tile matchedTile in matchedTiles)
+                        //    {
+                        //        Destroy(matchedTile);
+                        //    }
                     }
                 }
             }
-
-
-
-            // based on value of howManyMatches either replace tile with a bonus tile at tile location...
-
-            // ... or remove tile from temptiles
-
         }
+
+        foreach (Tile matchedTile in matchedTiles)
+        {
+            tiles[matchedTile.x, matchedTile.y] = null;
+            Destroy(matchedTile.gameObject);
+        }
+
+
+
 
         // If the program FoundAnyMatches then
         // Call function to fill in empty spaces
-        tiles = tempTiles;
+
         if (FoundAnyMatches == true)
         {
-            ClearMatches();
-        } else
+            Debug.Log("Tested FoundAnyMatches as true");
+            FillTiles();
+        }
+        else
         {
+            Debug.Log("Tested FoundAnyMatches as false. Move along.");
             IsMoving = false;
         }
-        //else return control to player
 
-        
+
+
+
     }
 
-    private void DestroyTileAndMatches(Tile tile)
+    private void FillTiles()
     {
-        matchedTiles.Add(tile);
-        tempTiles[tile.x, tile.y] = null;
-        howManyMatches += 1;
-        List<Tile> nextMatches = new List<Tile>();
-        nextMatches = tile.GetTempAdjacentMatches();
-        foreach (Tile newTile in nextMatches)
+        Debug.Log("starting fill tiles");
+        int firstEmpty;
+
+        for (int x = 0; x < xSize; x++)
         {
-            if (newTile != null)
+            firstEmpty = -1;
+            for (int y = 0; y < ySize; y++)
             {
-                DestroyTileAndMatches(newTile);
+                if (tiles[x,y] == null && firstEmpty < 0)
+                {
+                    firstEmpty = y;
+                    Debug.Log("Found empty space at " + x + ", " + y);
+                } else
+                {
+                    if (firstEmpty >= 0 && tiles[x,y] != null)
+                    {
+                        tiles[x, firstEmpty] = tiles[x, y];
+                        tiles[x, y] = null;
+                        firstEmpty++;
+                    }
+                }
+
             }
-            
         }
-        foreach (Tile destroyThisTile in matchedTiles)
-        {
-            Debug.Log("Attempting to destroy the tile " + destroyThisTile.name + " at " + destroyThisTile.x + ", " + destroyThisTile.y);
-            Destroy(destroyThisTile);
-        }
+
+        AddNewTiles();
+
     }
 
-    public bool IsValidMove(Tile tile1, Tile tile2)
+    private void AddNewTiles()
     {
+        Debug.Log("Starting AddNewTiles");
+        for (int x = 0; x < xSize; x++)
+        {
+            for (int y = 0; y < ySize; y++)
+            {
+                //if there is an empty space
+                if (tiles[x,y] == null)
+                {
 
-        return true;
+                    Debug.Log("found a hole at " + x + ", " + y);
+                    //create a new tile at x, y + ySize + 1
+                    CreateRandomTile(x, y);
+                    //add tile to tiles at x, y (this will force animation)
+                }
+            }
+        }
+
+        StartCoroutine(RecheckTilesDelay());
     }
+
+    private void CreateRandomTile(int x, int y)
+    {
+        Debug.Log("creating a random tile at " + x + ", " + (y + ySize));
+        Tile newTile = Instantiate(tile, new Vector3(x, y + ySize, 0), tile.transform.rotation);
+          
+        newTile.transform.parent = transform;
+
+        List<string> possibleColors = new List<string>();
+        possibleColors.AddRange(MatchColor);
+        possibleColors.Remove("bonus");
+        possibleColors.Remove("random");
+        possibleColors.Remove("none");
+
+        string newColor = possibleColors[UnityEngine.Random.Range(0, possibleColors.Count)];
+        Debug.Log("Setting sprite at " + x + ", " + y + " to " + newColor);
+        newTile.Initialize(assignedColor: newColor);
+        tiles[x, y] = newTile;
+        Debug.Log("tile at " + x + ", " + y + " is " + tiles[x, y].name);
+    }
+
+    private IEnumerator RecheckTilesDelay()
+    {
+        yield return new WaitForSeconds(1.2f);
+        Debug.Log("running match check again");
+        ClearMatches();
+    }
+
+    private List<Tile> GetContiguousMatches(Tile tile)
+    {
+        var matchList = new List<Tile>();
+        matchList.Add(tile);
+        howManyMatches += 1;
+        matchList.AddRange(tile.GetAdjacentMatches());
+        foreach (Tile forTile in matchList)
+        {
+            if (forTile != tile)
+            {
+                List<Tile> tempList = GetContiguousMatches(forTile);
+                matchList.AddRange(tempList);
+            }
+        }
+
+        return matchList;
+    }
+
 
     public bool ConfirmMatch(Tile tile)
     {
