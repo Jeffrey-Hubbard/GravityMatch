@@ -7,10 +7,13 @@ public class BoardManager : MonoBehaviour
 {
 
     public static BoardManager boardManager;
+    public HealthBar scoreBoard;
     public List<Sprite> symbols = new List<Sprite>();
     public Tile tile;
     public static int xSize = 9;
     public static int ySize = 9;
+    public Warp warp;
+    public Explode explode;
 
 
     public Tile[,] tiles;
@@ -105,6 +108,7 @@ public class BoardManager : MonoBehaviour
 
     public void ClearMatches()
     {
+        GameManager.ChangeState(GameManager.GameState.Matching);
         bool FoundAnyMatches = false;
         boardManager.IsMoving = true;
         tempTiles = CopyBoard(tiles);
@@ -128,51 +132,34 @@ public class BoardManager : MonoBehaviour
                         FoundAnyMatches = true;
                         Debug.Log("Tile at " + tile.x + ", " + tile.y + " Is a match!");
                         Debug.Log("matched " + howManyMatches + " tiles");
-                        //Debug.Log("matchedTiles contains " + matchedTiles.Count + " Tiles");
-                        //if (howManyMatches == 3)
-                        //{
-                        //    // create minor bonus at tile location, d
-                        //}
-                        //else if (howManyMatches > 3)
-                        //{
-                        //    //create major bonus at tile location, remove from matched and destroy
-                        //}
-                        //else
-                        //{
 
-                        //}
-                        
-
-                        //foreach (Tile matchedTile in matchedTiles)
-                        //    {
-                        //        Destroy(matchedTile);
-                        //    }
                     }
                 }
             }
         }
 
-        foreach (Tile matchedTile in matchedTiles)
+        if (matchedTiles.Count > 0)
         {
-            tiles[matchedTile.x, matchedTile.y] = null;
-            Destroy(matchedTile.gameObject);
+            StartCoroutine(DestroyMatchedTiles(matchedTiles));
         }
+        
+
+        
 
 
+        //// If the program FoundAnyMatches then
+        //// Call function to fill in empty spaces
 
-
-        // If the program FoundAnyMatches then
-        // Call function to fill in empty spaces
-
-        if (FoundAnyMatches == true)
-        {
-            Debug.Log("Tested FoundAnyMatches as true");
-            FillTiles();
-        }
+        //if (FoundAnyMatches == true)
+        //{
+        //    Debug.Log("Tested FoundAnyMatches as true");
+        //    FillTiles();
+        //}
         else
         {
             Debug.Log("Tested FoundAnyMatches as false. Move along.");
             IsMoving = false;
+            GameManager.ChangeState(GameManager.GameState.PlayerMove);
         }
 
 
@@ -180,9 +167,32 @@ public class BoardManager : MonoBehaviour
 
     }
 
+    private IEnumerator DestroyMatchedTiles(List<Tile> matchedTiles)
+    {
+        foreach (Tile matchedTile in matchedTiles)
+        {
+            tiles[matchedTile.x, matchedTile.y] = null;
+            if (matchedTile.matchColor == "green" || matchedTile.matchColor == "blue")
+            {
+                Warp warpGO = Instantiate(warp, new Vector3(matchedTile.x, matchedTile.y, 0), warp.transform.rotation);
+                warpGO.TileToDestroy = matchedTile;
+            } else
+            {
+                Explode explodeGO = Instantiate(explode, new Vector3(matchedTile.x, matchedTile.y, 0), explode.transform.rotation);
+                explodeGO.TileToDestroy = matchedTile;
+            }
+            
+
+        }
+        yield return new WaitForSeconds(2);
+        scoreBoard.ChangeScore(10);
+        FillTiles();
+    }
+
     private void FillTiles()
     {
         Debug.Log("starting fill tiles");
+        GameManager.ChangeState(GameManager.GameState.Filling);
         int firstEmpty;
 
         for (int x = 0; x < xSize; x++)

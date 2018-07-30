@@ -19,6 +19,8 @@ public class Tile : MonoBehaviour {
     public string matchColor;
     public string shipType;
 
+    public GameObject warp;
+
     // Use this for initialization
 
     public void Initialize()
@@ -85,7 +87,7 @@ public class Tile : MonoBehaviour {
 
     private void Update()
     {
-        if ((transform.position.x != x || transform.position.y != y))
+        if ((transform.position.x != x || transform.position.y != y) && (GameManager.IsFilling() || GameManager.IsSwapping()))
         {
             transform.position = Vector3.MoveTowards(transform.position, new Vector3(x, y, 0), speed * Time.deltaTime);
         }
@@ -109,7 +111,7 @@ public class Tile : MonoBehaviour {
     public void OnMouseDown()
     {
         //BoardManager.boardManager.IsMoving = false;
-        if (render.sprite == null || BoardManager.boardManager.IsMoving) { return; }
+        if (GameManager.IsPlayerMove() == false) { return; }
         if (isSelected)
         {
             Debug.Log("calling deselect");
@@ -125,7 +127,7 @@ public class Tile : MonoBehaviour {
                 if (GetAllAdjacentTiles().Contains(previousTile))
                 {
                     Debug.Log("touched tile is adjacent, moving tiles");
-                    BoardManager.boardManager.IsMoving = true;
+                    GameManager.ChangeState(GameManager.GameState.Swapping);
                     SwapTiles(previousTile, this);
                     Debug.Log("Ran swap tiles");
                     previousTile.Deselect();
@@ -175,7 +177,7 @@ public class Tile : MonoBehaviour {
             BoardManager.boardManager.tiles[previousX, previousY] = touchedTile;
         }
         yield return new WaitForSeconds(0.5f);
-        BoardManager.boardManager.IsMoving = false;
+        GameManager.ChangeState(GameManager.GameState.PlayerMove);
     }
 
     private List<Tile> GetAllAdjacentTiles()
@@ -350,12 +352,9 @@ public class Tile : MonoBehaviour {
         }
     }
 
-    public GameObject GetRight(int count = 1)
+    public void DestroyTile()
     {
-        //GameObject returnGameObject = BoardManager.boardManager.tiles[];
+        GameObject go = Instantiate(warp, new Vector3(x, y, 0), warp.transform.rotation);
 
-        GameObject returnGameObject = new GameObject();
-
-        return returnGameObject;
     }
 }

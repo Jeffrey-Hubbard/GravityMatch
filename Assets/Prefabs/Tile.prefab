@@ -125,6 +125,7 @@ MonoBehaviour:
   - asteroid
   matchColor: 
   shipType: 
+  warp: {fileID: 1611680862402070, guid: 7f348772ebbc5e14bbf928ffdd3dfc85, type: 2}
 --- !u!212 &212000010479004448
 SpriteRenderer:
   m_ObjectHideFlags: 1
