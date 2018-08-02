@@ -151,6 +151,7 @@ MonoBehaviour:
   tile: {fileID: 114238203400684026, guid: d865865fefcc4b44ca7242ca3bb6d141, type: 2}
   warp: {fileID: 114784248098822448, guid: 7f348772ebbc5e14bbf928ffdd3dfc85, type: 2}
   explode: {fileID: 114137647229375724, guid: a5385183cd6cf754c928271491e6e871, type: 2}
+  scoreManager: {fileID: 1536216893}
   howManyMatches: 0
   IsMoving: 0
   MatchColor:
@@ -628,6 +629,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1536216891}
   - component: {fileID: 1536216892}
+  - component: {fileID: 1536216893}
   m_Layer: 5
   m_Name: Score Manager
   m_TagString: Untagged
@@ -667,9 +669,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentScoreBar: {fileID: 366197634}
   playerScore: 0
-  maxScore: 100
+  maxScore: 1000
   displayedScore: 0
   playerScoreText: {fileID: 813892684}
+--- !u!114 &1536216893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1536216890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 575a1be4c3fdd1f43ae5c767f83ce006, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1674785710
 GameObject:
   m_ObjectHideFlags: 0
@@ -680,7 +693,7 @@ GameObject:
   - component: {fileID: 1674785711}
   - component: {fileID: 1674785712}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

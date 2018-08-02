@@ -14,6 +14,7 @@ public class BoardManager : MonoBehaviour
     public static int ySize = 9;
     public Warp warp;
     public Explode explode;
+    public ScoreManager scoreManager;
 
 
     public Tile[,] tiles;
@@ -109,8 +110,7 @@ public class BoardManager : MonoBehaviour
     public void ClearMatches()
     {
         GameManager.ChangeState(GameManager.GameState.Matching);
-        bool FoundAnyMatches = false;
-        boardManager.IsMoving = true;
+        //boardManager.IsMoving = true;
         tempTiles = CopyBoard(tiles);
         List<Tile> matchedTiles = new List<Tile>();
 
@@ -127,11 +127,9 @@ public class BoardManager : MonoBehaviour
                     if (ConfirmMatch(tile))
                     {
                         matchedTiles.Add(tile);
-                        // if yes, then set FoundAnyMatches to true, then
                         // mark all matched tiles in matchedTiles and remove from temptiles
-                        FoundAnyMatches = true;
                         Debug.Log("Tile at " + tile.x + ", " + tile.y + " Is a match!");
-                        Debug.Log("matched " + howManyMatches + " tiles");
+
 
                     }
                 }
@@ -143,22 +141,10 @@ public class BoardManager : MonoBehaviour
             StartCoroutine(DestroyMatchedTiles(matchedTiles));
         }
         
-
-        
-
-
-        //// If the program FoundAnyMatches then
-        //// Call function to fill in empty spaces
-
-        //if (FoundAnyMatches == true)
-        //{
-        //    Debug.Log("Tested FoundAnyMatches as true");
-        //    FillTiles();
-        //}
         else
         {
             Debug.Log("Tested FoundAnyMatches as false. Move along.");
-            IsMoving = false;
+            //IsMoving = false;
             GameManager.ChangeState(GameManager.GameState.PlayerMove);
         }
 
@@ -169,8 +155,18 @@ public class BoardManager : MonoBehaviour
 
     private IEnumerator DestroyMatchedTiles(List<Tile> matchedTiles)
     {
+        Dictionary<string, int> countMatches = new Dictionary<string, int>();
+        for (int i = 0; i < MatchColor.Count; i++)
+        {
+            countMatches.Add(MatchColor[i], 0);
+        }
         foreach (Tile matchedTile in matchedTiles)
         {
+            int runningCount;
+            if (countMatches.TryGetValue(matchedTile.matchColor, out runningCount)) {
+                runningCount += 1;
+                countMatches[matchedTile.matchColor] = runningCount;
+            }
             tiles[matchedTile.x, matchedTile.y] = null;
             if (matchedTile.matchColor == "green" || matchedTile.matchColor == "blue")
             {
@@ -184,8 +180,10 @@ public class BoardManager : MonoBehaviour
             
 
         }
-        yield return new WaitForSeconds(2);
-        scoreBoard.ChangeScore(10);
+        yield return new WaitForSeconds(1.2f);
+
+        scoreManager.ScoreMatches(countMatches);
+
         FillTiles();
     }
 

@@ -61,13 +61,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Explode.cs" />
-    <Compile Include="Assets\GameManager.cs" />
     <Compile Include="Assets\Scripts\BoardManager.cs" />
     <Compile Include="Assets\Scripts\CoroutineReturnsData.cs" />
+    <Compile Include="Assets\Scripts\Explode.cs" />
+    <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\HealthBar.cs" />
+    <Compile Include="Assets\Scripts\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\Tile.cs" />
-    <Compile Include="Assets\Warp.cs" />
+    <Compile Include="Assets\Scripts\Warp.cs" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/Jeffrey Hubbard/Documents/Gravity Match/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>

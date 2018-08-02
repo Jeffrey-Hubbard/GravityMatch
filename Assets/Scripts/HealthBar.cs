@@ -25,6 +25,7 @@ public class HealthBar : MonoBehaviour {
             displayedScore = playerScore;
             playerScoreText.text = displayedScore.ToString();
             float ratio = (float)displayedScore / (float)maxScore;
+
             currentScoreBar.rectTransform.localScale = new Vector3(ratio, 1, 1);
         }
 		if (playerScore > displayedScore)
@@ -32,6 +33,11 @@ public class HealthBar : MonoBehaviour {
             displayedScore += 1;
             playerScoreText.text = displayedScore.ToString();
             float ratio = (float)displayedScore / (float)maxScore;
+            //make sure when score is greater than maxscore the bar doesn't overflow the page
+            if (ratio > 1.0f)
+            {
+                ratio = 1.0f;
+            }
             currentScoreBar.rectTransform.localScale = new Vector3(ratio, 1, 1);
         }
 	}
